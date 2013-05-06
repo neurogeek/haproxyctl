@@ -1,0 +1,4 @@
+HaP_OK = 1
+HaP_ERR = 2
+HaP_SOCK_ERR = 3
+HaP_BUFSIZE=1024

@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+"""
+Tool to interact with HAProxy.
+
+Notes
+=====
+
+haproxyctl looks for a configuration file on the following places:
+1) Global: /etc/haproxyctl/haproxyctl.conf
+2) User: ~/.haproxyctl.conf
+3) Command line options.
+
+This order is important, since options in the global file will
+get overriden by the ones in the user config file, which in turn 
+will get overriden by the command line options."""
+
+import os
+import sys
+import argparse
+from ConfigParser import ConfigParser
+
+from haproxy.conn import HaPConn
+from haproxy import cmds
+
+VERBOSE = False
+GCONFIG="/etc/haproxyctl/"
+UCONFIG=os.path.expanduser("~/.")
+
+def process_config_files():
+    config_opts = {}
+    cfgp = ConfigParser()
+
+    for cfg in [GCONFIG, UCONFIG]:
+        cfgf = "".join((cfg, "haproxyctl.conf"))
+        print cfgf
+        if os.path.exists(cfgf):
+            cfgp.read(cfgf)
+            for k, v in cfgp.items("global"):
+                config_opts[k] = v
+
+    return config_opts
+
+def logger(msg):
+    if VERBOSE:
+        print msg
+
+def main(args):
+    cmd_map = {'info' : lambda s: s.sendCmd(cmds.showInfo())}
+
+    logger("Starting with args: ")
+    logger(args)
+
+    if not args.socket:
+        print "HAProxy socket not found. Must provide a socket file"
+        return 2
+
+    h_so = HaPConn(args.socket)
+    if h_so:
+        if args.info:
+            print s.sendCmd(cmds.showInfo())
+        elif args.server and args.action:
+            if args.backend:
+                cmdline = {'backend' : args.backend, 'server' : args.server}
+                if args.action in ('disable', 'dead'):
+                    h_so.sendCmd(cmds.disableServer(**cmdline))
+                elif args.action in ('enable', 'alive'):
+                    h_so.sendCmd(cmds.enableServer(**cmdline))
+            else:
+                print "Need to specify a backend."
+    return 0
+    
+if __name__ == "__main__":
+    
+    cfo = process_config_files()
+    opts = argparse.ArgumentParser(description="Tool to interact with HAProxy", prog="haproxyctl")
+
+    opts.add_argument("-s", "--server", help="Attempt action on given server", default=None)
+    opts.add_argument("-a", "--action", help="Type of action. disable, enable, alive, dead", default=None)
+    opts.add_argument("-v", "--verbose", help="Be verbose", action="store_true", default=cfo.get('verbose', False))
+    opts.add_argument("-b", "--backend", help="Set backend to act upon", default=cfo.get('backend', None))
+    opts.add_argument("-i", "--info", help="Show information on running HAProxy instance", action="store_true")
+    opts.add_argument("-t", "--stats", help="Show stats table", action="store_true")
+    opts.add_argument("-x", "--extended-stats", help="Extended stats table", action="store_true")
+    opts.add_argument("-k", "--socket", help="Socket to talk to HAProxy", default=cfo.get('socket', None))
+
+    args = opts.parse_args()
+    VERBOSE = args.verbose
+
+    sts = main(args)
+    sys.exit(sts)
