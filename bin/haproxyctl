@@ -57,7 +57,7 @@ def main(args):
     h_so = HaPConn(args.socket)
     if h_so:
         if args.info:
-            print s.sendCmd(cmds.showInfo())
+            print h_so.sendCmd(cmds.showInfo())
         elif args.server and args.action:
             if args.backend:
                 cmdline = {'backend' : args.backend, 'server' : args.server}
