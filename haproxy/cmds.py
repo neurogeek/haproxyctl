@@ -1,5 +1,13 @@
+"""cmds.py
+   Implementations of the different HAProxy commands"""
+
+import re
+
 class Cmd(object):
-    args = []
+    """Cmd - Command base class"""
+
+    p_args = []
+    args = {}
     cmdTxt = ""
 
     def __init__(self, *args, **kwargs):
@@ -7,22 +15,43 @@ class Cmd(object):
            in kwargs only. We ignore *args."""
 
         self.args = kwargs
+        if not all([a in kwargs.keys() for a in self.p_args]):
+            raise Exception("Wrong number of arguments. Required arguments are " + 
+                                self.whatArgs())
 
     def whatArgs(self):
-        return self.args
+        return ",".join(self.p_args)
+
+    @classmethod
+    def getHelp(self):
+        txtArgs = ",".join(self.p_args)
+
+        if not txtArgs:
+            txtArgs = "None"
+        return " ".join((self.helpTxt, "Arguments: %s" % txtArgs))
 
     def getCmd(self):
-        raise Exception("Must be Overriden")
+
+        # The default behavior is to apply the 
+        # args dict to cmdTxt
+        return self.cmdTxt % self.args
 
     def getResult(self, res):
+        """Returns raw results gathered from 
+           HAProxy"""
         return res
 
     def getResultObj(self, res):
+        """Returns refined output from 
+           HAProxy, packed inside a Python obj
+           i.e. a dict()"""
         return res
 
 class _ableServer(Cmd):
+    """Base class for enable/disable commands"""
+
     cmdTxt = "server %(backend)s/%(server)s\r\n"
-    args = ["backend", "server"]
+    p_args = ["backend", "server"]
     switch = ""
 
     def getCmd(self):
@@ -33,48 +62,79 @@ class _ableServer(Cmd):
 
 class disableServer(_ableServer):
     switch = "disable"
+    helpTxt = "Disables given backend/server"
 
 class enableServer(_ableServer):
     switch = "enable"
+    helpTxt = "Enables given backend/server"
+
+class setWeight(Cmd):
+    cmdTxt = "set weight %(backend)s/%(server)s %(weight)s\r\n"
+    p_args = ['backend', 'server', 'weight']
+    helpTxt = "Set weight for a given backend/server."
+
+class getWeight(Cmd):
+    cmdTxt = "get weight %(backend)s/%(server)s\r\n"
+    p_args = ['backend', 'server']
+    helpTxt = "Get weight for a given backend/server."
 
 class showErrors(Cmd):
-    def getCmd(self):
-        return "show errors\r\n"
+    """Show errors HAProxy command"""
+    cmdTxt = "show errors\r\n"
+    helpTxt = "Shows errors on HAProxy instance."
+
+    def getResultObj(self, res):
+        return res.split('\n')
 
 class showInfo(Cmd):
-    def getCmd(self):
-        return "show info\r\n"
+    """Show info HAProxy command"""
+    cmdTxt = "show info\r\n"
+    helpTxt = "Shows errors on HAProxy instance."
 
-#    def getResultObj(self, res)
-#    def getResult(self, res):
-#       """Name: HAProxy
-#           Version: 1.5-dev17
-#           Release_date: 2012/12/28
-#           Nbproc: 1
-#           Process_num: 1
-#           Pid: 26947
-#           Uptime: 3d 12h02m59s
-#           Uptime_sec: 302579
-#           Memmax_MB: 0
-#           Ulimit-n: 2092
-#           Maxsock: 2092
-#           Maxconn: 1024
-#           Hard_maxconn: 1024
-#           Maxpipes: 0
-#           CurrConns: 0
-#           PipesUsed: 0
-#           PipesFree: 0
-#           ConnRate: 0
-#           ConnRateLimit: 0
-#           MaxConnRate: 30
-#           CompressBpsIn: 0
-#           CompressBpsOut: 0
-#           CompressBpsRateLim: 0
-#           ZlibMemUsage: 0
-#           MaxZlibMemUsage: 0
-#           Tasks: 14
-#           Run_queue: 1
-#           Idle_pct: 100
-#           node: dlb0
-#           description:""" 
-#       return res
+    def getResultObj(self, res):
+        resDict = {}
+        for line in res.split('\n'):
+            k, v = line.split(':')
+            resDict[k] = v
+
+        return resDict
+
+class baseStat(Cmd):
+    def getCols(self, res):
+        mobj = re.match("^#(?P<columns>.*)$", res, re.MULTILINE)
+
+        if mobj:
+            return dict((a, i) for i, a in enumerate(mobj.groupdict()['columns'].split(',')))
+        raise Exception("Could not parse columns from HAProxy output")
+
+## pxname,svname,qcur,qmax,scur,smax,slim,stot,bin,bout,dreq,dresp,ereq,econ,eresp,wretr,wredis,status,weight,act,bck,chkfail,chkdown,lastchg,downtime,qlimit,pid,iid,sid,throttle,lbtot,tracked,type,rate,rate_lim,rate_max,check_status,check_code,check_duration,hrsp_1xx,hrsp_2xx,hrsp_3xx,hrsp_4xx,hrsp_5xx,hrsp_other,hanafail,req_rate,req_rate_max,req_tot,cli_abrt,srv_abrt,comp_in,comp_out,comp_byp,comp_rsp,
+
+class listServers(baseStat):
+    """Show servers in the given backend"""
+
+    p_args = ['backend']
+    cmdTxt = "show stat\r\n"
+    helpTxt = "Lists servers in the given backend"
+
+    def getResult(self, res):
+        return "\n".join(self.getResultObj(res))
+
+    def getResultObj(self, res):
+        
+        servers = []
+        cols = self.getCols(res)
+
+        for line in res.split('\n'):
+            if line.startswith(self.args['backend']):
+                # Lines for server start with the name of the 
+                # backend.
+
+                outCols = line.split(',')
+                if outCols[cols['svname']] != 'BACKEND':
+                    servers.append(" " .join(("Name: %s" % outCols[cols['svname']],
+                             "Status: %s" % outCols[cols['status']], 
+                             "Weight: %s" %  outCols[cols['weight']],
+                             "bIn: %s" % outCols[cols['bin']],
+                             "bOut: %s" % outCols[cols['bout']])))
+
+        return servers
