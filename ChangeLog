@@ -1,0 +1,9 @@
+2013 May, 8.
+	0.2 
+		- Added new commands (get weight, set weight, servers)
+		- Fixed problems with the buffer size while reading from the socket.
+		- Restructured command execution and arguments in haproxyctl
+
+2013 May, 7.
+	0.1 
+		- Initial development.
