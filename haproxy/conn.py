@@ -29,13 +29,18 @@ class HaPConn(object):
            the command to parse it a present it. 
            - objectify -> Return an object instead of plain text"""
            
+        res = ""
         self.sock.send(cmd.getCmd())
         output = self.sock.recv(const.HaP_BUFSIZE)
-        
-        if objectify:
-            return cmd.getResultObj(output)
+       
+        while output:
+            res += output
+            output = self.sock.recv(const.HaP_BUFSIZE)
 
-        return cmd.getResult(output)
+        if objectify:
+            return cmd.getResultObj(res)
+
+        return cmd.getResult(res)
 
     def close(self):
         """Closes the socket"""
