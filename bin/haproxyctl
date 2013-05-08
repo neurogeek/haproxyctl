@@ -32,7 +32,6 @@ def process_config_files():
 
     for cfg in [GCONFIG, UCONFIG]:
         cfgf = "".join((cfg, "haproxyctl.conf"))
-        print cfgf
         if os.path.exists(cfgf):
             cfgp.read(cfgf)
             for k, v in cfgp.items("global"):
@@ -45,8 +44,6 @@ def logger(msg):
         print msg
 
 def main(args):
-    cmd_map = {'info' : lambda s: s.sendCmd(cmds.showInfo())}
-
     logger("Starting with args: ")
     logger(args)
 
@@ -54,34 +51,53 @@ def main(args):
         print "HAProxy socket not found. Must provide a socket file"
         return 2
 
-    h_so = HaPConn(args.socket)
-    if h_so:
-        if args.info:
-            print h_so.sendCmd(cmds.showInfo())
-        elif args.server and args.action:
-            if args.backend:
-                cmdline = {'backend' : args.backend, 'server' : args.server}
-                if args.action in ('disable', 'dead'):
-                    h_so.sendCmd(cmds.disableServer(**cmdline))
-                elif args.action in ('enable', 'alive'):
-                    h_so.sendCmd(cmds.enableServer(**cmdline))
+    cmdline = {'backend' : args.backend, 
+               'weight' : args.weight,
+               'server' : args.server}
+
+    cmdMap = {"info" : cmds.showInfo,
+              "enable" : cmds.enableServer,
+              "disable" : cmds.disableServer,
+              "get-weight" : cmds.getWeight,
+              "servers" : cmds.listServers,
+              "set-weight" : cmds.setWeight}
+
+    if args.list_commands:
+        print "Available commands:"
+        for c in cmdMap.keys():
+            print "\t", c, " - ", cmdMap[c].getHelp()
+    else:
+        cCmd = cmdMap.get(args.command, None)
+        if cCmd:
+            if args.help_command:
+                print args.command, " - ", cCmd.getHelp()
             else:
-                print "Need to specify a backend."
+
+                h_so = HaPConn(args.socket)
+
+                if h_so:
+                    print h_so.sendCmd(cCmd(**cmdline))
+                else:
+                    print "Could not open socket"
+        else:
+            print "Need to specify a backend."
+
     return 0
     
 if __name__ == "__main__":
     
+    st = "store_true"
     cfo = process_config_files()
     opts = argparse.ArgumentParser(description="Tool to interact with HAProxy", prog="haproxyctl")
 
-    opts.add_argument("-s", "--server", help="Attempt action on given server", default=None)
-    opts.add_argument("-a", "--action", help="Type of action. disable, enable, alive, dead", default=None)
-    opts.add_argument("-v", "--verbose", help="Be verbose", action="store_true", default=cfo.get('verbose', False))
-    opts.add_argument("-b", "--backend", help="Set backend to act upon", default=cfo.get('backend', None))
-    opts.add_argument("-i", "--info", help="Show information on running HAProxy instance", action="store_true")
-    opts.add_argument("-t", "--stats", help="Show stats table", action="store_true")
-    opts.add_argument("-x", "--extended-stats", help="Extended stats table", action="store_true")
-    opts.add_argument("-k", "--socket", help="Socket to talk to HAProxy", default=cfo.get('socket', None))
+    opts.add_argument("-v", "--verbose", help="Be verbose.", action=st, default=cfo.get('verbose', False))
+    opts.add_argument("-c", "--command", help="Type of command. Default info", default="info")
+    opts.add_argument("-l", "--list-commands", help="Lists available commands.", action=st)
+    opts.add_argument("-H", "--help-command", help="Shows help for the given command.", action=st)
+    opts.add_argument("-s", "--server", help="Attempt action on given server.", default=None)
+    opts.add_argument("-b", "--backend", help="Set backend to act upon.", default=cfo.get('backend', None))
+    opts.add_argument("-k", "--socket", help="Socket to talk to HAProxy.", default=cfo.get('socket', None))
+    opts.add_argument("-w", "--weight", help="Specify weight for a server.")
 
     args = opts.parse_args()
     VERBOSE = args.verbose
