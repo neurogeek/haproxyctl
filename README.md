@@ -9,12 +9,12 @@ About
 HAProxyctl is a tool to manage the various aspects of HAProxy that can be controlled by means of its socket.
 
 With HAProxyctl, it is possible to do the following:
-	* info  -  Shows errors on HAProxy instance. Arguments: None
-	* enable  -  Enables given backend/server Arguments: backend,server
-  * disable  -  Disables given backend/server Arguments: backend,server
-  * get-weight  -  Get weight for a given backend/server. Arguments: backend,server	
-  * set-weight  -  Set weight for a given backend/server. Arguments: backend,server,weight
-	* servers  -  Lists servers in the given backend Arguments: backend
+* info  -  Shows errors on HAProxy instance. Arguments: None
+* enable  -  Enables given backend/server Arguments: backend,server
+* disable  -  Disables given backend/server Arguments: backend,server
+* get-weight  -  Get weight for a given backend/server. Arguments: backend,server	
+* set-weight  -  Set weight for a given backend/server. Arguments: backend,server,weight
+* servers  -  Lists servers in the given backend Arguments: backend
 
 Modes
 -----
@@ -24,11 +24,14 @@ CLI mode, as the name implies, gives you a command, haproxyctl, that can be used
 
 You can use the Python API mode to integrate HAProxyctl directly in your Python project.
 
-Every command in HAProxyctl has at least two methods: getResut and getResultObj. getResult returns a formatted string with the results obtained by executing the given HAProxy command, while getResultObj returns a Python object with the results, making it easy to use this results in some Python code.
+Every command in HAProxyctl has at least two methods: getResut and getResultObj. 
+
+The method getResult returns a formatted string with the results obtained by executing the given HAProxy command, while getResultObj returns a Python object with the results, making it easy to use this results in some Python code.
 
 CLI Usage
 ---------
 
+```
 usage: haproxyctl [-h] [-v] [-c COMMAND] [-l] [-H] [-s SERVER] [-b BACKEND]
                   [-k SOCKET] [-w WEIGHT]
 
@@ -49,7 +52,7 @@ optional arguments:
                         Socket to talk to HAProxy.
   -w WEIGHT, --weight WEIGHT
                         Specify weight for a server.
-
+```
 
 API Usage
 ---------
