@@ -47,10 +47,6 @@ def main(args):
     logger("Starting with args: ")
     logger(args)
 
-    if not args.socket:
-        print "HAProxy socket not found. Must provide a socket file"
-        return 2
-
     cmdline = {'backend' : args.backend, 
                'weight' : args.weight,
                'server' : args.server}
@@ -66,21 +62,27 @@ def main(args):
         print "Available commands:"
         for c in cmdMap.keys():
             print "\t", c, " - ", cmdMap[c].getHelp()
-    else:
-        cCmd = cmdMap.get(args.command, None)
-        if cCmd:
-            if args.help_command:
-                print args.command, " - ", cCmd.getHelp()
-            else:
+        return 2
 
-                h_so = HaPConn(args.socket)
+    cCmd = cmdMap.get(args.command, None)
 
-                if h_so:
-                    print h_so.sendCmd(cCmd(**cmdline))
-                else:
-                    print "Could not open socket"
+    if cCmd:
+        if args.help_command:
+            print args.command, " - ", cCmd.getHelp()
         else:
-            print "Need to specify a backend."
+
+            if not args.socket:
+                print "HAProxy socket not found. Must provide a socket file"
+                return 3
+
+            h_so = HaPConn(args.socket)
+
+            if h_so:
+                print h_so.sendCmd(cCmd(**cmdline))
+            else:
+                print "Could not open socket"
+    else:
+        print "Need to specify a backend."
 
     return 0
     
