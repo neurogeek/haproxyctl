@@ -3,6 +3,11 @@ HAProxyctl
 
 HAProxy control tool
 
+Build Status
+------------
+
+[![Build Status](https://travis-ci.org/neurogeek/haproxyctl.png?branch=master)](https://travis-ci.org/neurogeek/haproxyctl)
+
 About
 --------
 
