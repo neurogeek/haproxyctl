@@ -86,10 +86,47 @@ class showErrors(Cmd):
     def getResultObj(self, res):
         return res.split('\n')
 
+class showFBEnds(Cmd):
+    """Base class for getting a listing Frontends and Backends"""
+    switch = ""
+    cmdTxt = "show stat\r\n"
+
+    def getResult(self, res):
+        return "\n".join(self._getResult(self, res))
+
+    def getResultObj(self, res):
+        return self._getResult(self, res)
+
+    def _getResult(self, res):
+        """Show Frontend/Backends. To do this, we extract info from
+           the stat command and filter out by a specific
+           switch (FRONTEND/BACKEND)"""
+
+        if not self.switch:
+            raise Exception("No action specified")
+            
+        result = []
+        lines = res.split('\n')
+        cl = re.compile("^[^,].+," + self.switch.upper() + ",.*$")
+
+        for e in lines:
+            me = re.match(cl, e) 
+            if me:
+                result.append(e.split(",")[0])
+        return result
+
+class showFrontends(showFBEnds):
+    switch = "frontend"
+    helpTxt = "List all Frontends."
+
+class showBackends(showFBEnds):
+    switch = "backend"
+    helpTxt = "List all Backends."
+
 class showInfo(Cmd):
     """Show info HAProxy command"""
     cmdTxt = "show info\r\n"
-    helpTxt = "Shows errors on HAProxy instance."
+    helpTxt = "Show info on HAProxy instance."
 
     def getResultObj(self, res):
         resDict = {}

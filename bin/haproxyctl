@@ -56,7 +56,9 @@ def main(args):
               "disable" : cmds.disableServer,
               "get-weight" : cmds.getWeight,
               "servers" : cmds.listServers,
-              "set-weight" : cmds.setWeight}
+              "set-weight" : cmds.setWeight,
+              "frontends" : cmds.showFrontends,
+              "backends" : cmds.showBackends}
 
     if args.list_commands:
         print "Available commands:"
