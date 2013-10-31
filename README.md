@@ -14,6 +14,7 @@ About
 HAProxyctl is a tool to manage the various aspects of HAProxy that can be controlled by means of its socket.
 
 With HAProxyctl, it is possible to do the following:
+
 (New in 0.3)
 * frontends  -  Lists available Frontends. Arguments: None
 * backends  -  Lists available Backends. Arguments: None
