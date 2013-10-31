@@ -9,9 +9,16 @@ class TestCommands(TestCase):
                      "errors" : "show errors",
                      "set-weight" : "set weight redis-ro/redis-ro0 20",
                      "get-weight" : "get weight redis-ro/redis-ro0",
+                     "frontends" : "show stat",
                      "enable" : "enable server redis-ro/redis-ro0"}
 
         self.Resp = dict([(k, v + "\r\n") for k, v in self.Resp.iteritems()])
+
+    def test_showFrontends(self):
+        """Test 'frontends/backends' commands"""
+        args = {}
+        cmdFrontends = cmds.showFrontends(**args).getCmd()
+        self.assertEqual(cmdFrontends, self.Resp["frontends"])
 
     def test_disableServer(self):
         """Test 'disable server' command"""
