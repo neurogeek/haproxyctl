@@ -1,3 +1,7 @@
+2013 Nov, 4.
+	0.3.1
+		- Fixed wrong self accidentally passed to self._getResult.
+
 2013 Oct, 31.
 	0.3 
 		- Added new commands (frontends, backends)

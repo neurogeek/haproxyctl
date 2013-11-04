@@ -92,10 +92,10 @@ class showFBEnds(Cmd):
     cmdTxt = "show stat\r\n"
 
     def getResult(self, res):
-        return "\n".join(self._getResult(self, res))
+        return "\n".join(self._getResult(res))
 
     def getResultObj(self, res):
-        return self._getResult(self, res)
+        return self._getResult(res)
 
     def _getResult(self, res):
         """Show Frontend/Backends. To do this, we extract info from
