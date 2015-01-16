@@ -136,6 +136,14 @@ class showInfo(Cmd):
 
         return resDict
 
+class showSessions(Cmd):
+    """Show sess HAProxy command"""
+    cmdTxt = "show sess\r\n"
+    helpTxt = "Show HAProxy sessions."
+
+    def getResultObj(self, res):
+        return res.split('\n')
+
 class baseStat(Cmd):
     def getCols(self, res):
         mobj = re.match("^#(?P<columns>.*)$", res, re.MULTILINE)

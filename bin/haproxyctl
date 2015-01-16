@@ -58,7 +58,8 @@ def main(args):
               "servers" : cmds.listServers,
               "set-weight" : cmds.setWeight,
               "frontends" : cmds.showFrontends,
-              "backends" : cmds.showBackends}
+              "backends" : cmds.showBackends,
+              "sessions" : cmds.showSessions}
 
     if args.list_commands:
         print "Available commands:"
