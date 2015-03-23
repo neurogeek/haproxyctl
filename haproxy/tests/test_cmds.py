@@ -10,7 +10,11 @@ class TestCommands(TestCase):
                      "set-weight" : "set weight redis-ro/redis-ro0 20",
                      "get-weight" : "get weight redis-ro/redis-ro0",
                      "frontends" : "show stat",
-                     "enable" : "enable server redis-ro/redis-ro0"}
+                     "enable" : "enable server redis-ro/redis-ro0",
+                     "set-server-agent" : "set server redis-ro/redis-ro0 agent up",
+                     "set-server-health" : "set server redis-ro/redis-ro0 health stopping",
+                     "set-server-state" : "set server redis-ro/redis-ro0 state drain",
+                     }
 
         self.Resp = dict([(k, v + "\r\n") for k, v in self.Resp.iteritems()])
 
@@ -53,3 +57,21 @@ class TestCommands(TestCase):
         """Test 'show errors' command"""
         cmdShowErrors = cmds.showErrors().getCmd()
         self.assertEqual(cmdShowErrors, self.Resp["errors"])
+
+    def test_setServerAgent(self):
+        """Test 'set server agent' command"""
+        args = {"backend": "redis-ro", "server" : "redis-ro0", "value": "up"}
+        cmdSetServerAgent = cmds.setServerAgent(**args).getCmd()
+        self.assertEqual(cmdSetServerAgent, self.Resp["set-server-agent"])
+
+    def test_setServerHealth(self):
+        """Test 'set server health' command"""
+        args = {"backend": "redis-ro", "server" : "redis-ro0", "value": "stopping"}
+        cmdSetServerHealth = cmds.setServerHealth(**args).getCmd()
+        self.assertEqual(cmdSetServerHealth, self.Resp["set-server-health"])
+
+    def test_setServerState(self):
+        """Test 'set server state' command"""
+        args = {"backend": "redis-ro", "server" : "redis-ro0", "value": "drain"}
+        cmdSetServerState = cmds.setServerState(**args).getCmd()
+        self.assertEqual(cmdSetServerState, self.Resp["set-server-state"])

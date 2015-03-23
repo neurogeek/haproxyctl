@@ -86,6 +86,21 @@ class showErrors(Cmd):
     def getResultObj(self, res):
         return res.split('\n')
 
+class setServerAgent(Cmd):
+    cmdTxt = "set server %(backend)s/%(server)s agent %(value)s\r\n"
+    p_args = ['backend', 'server', 'value']
+    helpTxt = "Force a server's agent to a new state."
+
+class setServerHealth(Cmd):
+    cmdTxt = "set server %(backend)s/%(server)s health %(value)s\r\n"
+    p_args = ['backend', 'server', 'value']
+    helpTxt = "Force a server's health to a new state."
+
+class setServerState(Cmd):
+    cmdTxt = "set server %(backend)s/%(server)s state %(value)s\r\n"
+    p_args = ['backend', 'server', 'value']
+    helpTxt = "Force a server's administrative state to a new state."
+
 class showFBEnds(Cmd):
     """Base class for getting a listing Frontends and Backends"""
     switch = ""
