@@ -11,7 +11,7 @@ haproxyctl looks for a configuration file on the following places:
 3) Command line options.
 
 This order is important, since options in the global file will
-get overriden by the ones in the user config file, which in turn 
+get overriden by the ones in the user config file, which in turn
 will get overriden by the command line options."""
 
 import os
@@ -47,7 +47,7 @@ def main(args):
     logger("Starting with args: ")
     logger(args)
 
-    cmdline = {'backend' : args.backend, 
+    cmdline = {'backend' : args.backend,
                'weight' : args.weight,
                'server' : args.server}
 
@@ -78,19 +78,23 @@ def main(args):
                 print "HAProxy socket not found. Must provide a socket file"
                 return 3
 
-            h_so = HaPConn(args.socket)
+            try:
+                h_so = HaPConn(args.socket)
 
-            if h_so:
-                print h_so.sendCmd(cCmd(**cmdline))
-            else:
-                print "Could not open socket"
+                if h_so:
+                    print h_so.sendCmd(cCmd(**cmdline))
+                else:
+                    print "Could not open socket"
+            except Exception as e:
+                print str(e)
+                return 4
     else:
         print "Need to specify a backend."
 
     return 0
-    
+
 if __name__ == "__main__":
-    
+
     st = "store_true"
     cfo = process_config_files()
     opts = argparse.ArgumentParser(description="Tool to interact with HAProxy", prog="haproxyctl")
@@ -102,11 +106,11 @@ if __name__ == "__main__":
     opts.add_argument("-s", "--server", help="Attempt action on given server.", default=None)
     opts.add_argument("-b", "--backend", help="Set backend to act upon.", default=cfo.get('backend', None))
     opts.add_argument("-w", "--weight", help="Specify weight for a server.")
-    opts.add_argument("-k", "--socket", 
+    opts.add_argument("-k", "--socket",
         help=("Socket to talk to HAProxy. It accepts unix:///path/to/socket"
-              " or tcp://1.2.3.4[:port] addresses (default port: 1936)." 
+              " or tcp://1.2.3.4:port addresses."
               " If there is no match for protocol, then it assumes a UNIX"
-              " socket file."), 
+              " socket file."),
         default=cfo.get("socket", None))
 
     args = opts.parse_args()

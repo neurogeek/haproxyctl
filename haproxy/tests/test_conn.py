@@ -33,14 +33,10 @@ class TestConnection(TestCase):
         addr, stype = c.sfile
         ip, port = addr
         self.assertEqual("1.2.3.4", ip)
-        self.assertEqual("8080", port)
+        self.assertEqual(8080, port)
         self.assertEqual(stype, AF_INET)
 
     def testConnTCPStringNoPort(self):
         sfile = "tcp://1.2.3.4"
-        c = conn.HaPConn(sfile, socket_module=SimpleConnMock)
-        addr, stype = c.sfile
-        ip, port = addr
-        self.assertEqual(stype, AF_INET)
-        self.assertEqual(ip, "1.2.3.4")
-        self.assertEqual(port, const.HaP_DEFAULT_TPC_PORT)
+        with self.assertRaises(Exception):
+            c = conn.HaPConn(sfile, socket_module=SimpleConnMock)
