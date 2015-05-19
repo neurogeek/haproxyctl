@@ -101,8 +101,13 @@ if __name__ == "__main__":
     opts.add_argument("-H", "--help-command", help="Shows help for the given command.", action=st)
     opts.add_argument("-s", "--server", help="Attempt action on given server.", default=None)
     opts.add_argument("-b", "--backend", help="Set backend to act upon.", default=cfo.get('backend', None))
-    opts.add_argument("-k", "--socket", help="Socket to talk to HAProxy.", default=cfo.get('socket', None))
     opts.add_argument("-w", "--weight", help="Specify weight for a server.")
+    opts.add_argument("-k", "--socket", 
+        help=("Socket to talk to HAProxy. It accepts unix:///path/to/socket"
+              " or tcp://1.2.3.4[:port] addresses (default port: 1936)." 
+              " If there is no match for protocol, then it assumes a UNIX"
+              " socket file."), 
+        default=cfo.get("socket", None))
 
     args = opts.parse_args()
     VERBOSE = args.verbose
