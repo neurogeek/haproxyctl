@@ -38,5 +38,9 @@ class TestConnection(TestCase):
 
     def testConnTCPStringNoPort(self):
         sfile = "tcp://1.2.3.4"
-        with self.assertRaises(Exception):
+        # Not using assertRaises because we still support 2.6
+        try:
             c = conn.HaPConn(sfile, socket_module=SimpleConnMock)
+            raise Exception('Connection should have thrown an exception')
+        except:
+            pass
