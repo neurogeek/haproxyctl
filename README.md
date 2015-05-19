@@ -15,6 +15,9 @@ HAProxyctl is a tool to manage the various aspects of HAProxy that can be contro
 
 With HAProxyctl, it is possible to do the following:
 
+(New in 0.4)
+* Ability to pass a tcp:// or a unix:// socket address to -k|--socket
+
 (New in 0.3)
 * frontends  -  Lists available Frontends. Arguments: None
 * backends  -  Lists available Backends. Arguments: None
