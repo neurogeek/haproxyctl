@@ -44,7 +44,7 @@ CLI Usage
 
 ```
 usage: haproxyctl [-h] [-v] [-c COMMAND] [-l] [-H] [-s SERVER] [-b BACKEND]
-                  [-k SOCKET] [-w WEIGHT]
+                  [-w WEIGHT] [-k SOCKET]
 
 Tool to interact with HAProxy
 
@@ -59,10 +59,13 @@ optional arguments:
                         Attempt action on given server.
   -b BACKEND, --backend BACKEND
                         Set backend to act upon.
-  -k SOCKET, --socket SOCKET
-                        Socket to talk to HAProxy.
   -w WEIGHT, --weight WEIGHT
                         Specify weight for a server.
+  -k SOCKET, --socket SOCKET
+                        Socket to talk to HAProxy. It accepts
+                        unix:///path/to/socket or tcp://1.2.3.4[:port]
+                        addresses. If there is no match
+                        for protocol, then it assumes a UNIX socket file.
 ```
 
 API Usage
