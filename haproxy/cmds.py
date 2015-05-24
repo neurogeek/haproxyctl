@@ -1,5 +1,5 @@
-"""cmds.py
-   Implementations of the different HAProxy commands"""
+# pylint: disable=locally-disabled, too-few-public-methods, no-self-use, invalid-name
+"""cmds.py - Implementations of the different HAProxy commands"""
 
 import re
 
@@ -9,42 +9,42 @@ class Cmd(object):
     p_args = []
     args = {}
     cmdTxt = ""
+    helpTxt = ""
 
+    # pylint: disable=unused-argument
     def __init__(self, *args, **kwargs):
-        """Argument to the command are given 
-           in kwargs only. We ignore *args."""
+        """Argument to the command are given in kwargs only. We ignore *args."""
 
         self.args = kwargs
         if not all([a in kwargs.keys() for a in self.p_args]):
-            raise Exception("Wrong number of arguments. Required arguments are " + 
-                                self.whatArgs())
+            raise Exception("Wrong number of arguments. Required arguments are " +
+                            self.WhatArgs())
 
-    def whatArgs(self):
+    def WhatArgs(self):
+        """Returns a formatted string of arguments to this command."""
         return ",".join(self.p_args)
 
     @classmethod
-    def getHelp(self):
-        txtArgs = ",".join(self.p_args)
+    def getHelp(cls):
+        """Get formatted help string for this command."""
+        txtArgs = ",".join(cls.p_args)
 
         if not txtArgs:
             txtArgs = "None"
-        return " ".join((self.helpTxt, "Arguments: %s" % txtArgs))
+        return " ".join((cls.helpTxt, "Arguments: %s" % txtArgs))
 
     def getCmd(self):
-
-        # The default behavior is to apply the 
-        # args dict to cmdTxt
+        """Gets the command line for this command.
+        The default behavior is to apply the args dict to cmdTxt
+        """
         return self.cmdTxt % self.args
 
     def getResult(self, res):
-        """Returns raw results gathered from 
-           HAProxy"""
+        """Returns raw results gathered from HAProxy"""
         return res
 
     def getResultObj(self, res):
-        """Returns refined output from 
-           HAProxy, packed inside a Python obj
-           i.e. a dict()"""
+        """Returns refined output from HAProxy, packed inside a Python obj i.e. a dict()"""
         return res
 
 class _ableServer(Cmd):
@@ -57,29 +57,33 @@ class _ableServer(Cmd):
     def getCmd(self):
         if not self.switch:
             raise Exception("No action specified")
-        cmdTxt = " ".join((self.switch, self.cmdTxt % self.args)) 
+        cmdTxt = " ".join((self.switch, self.cmdTxt % self.args))
         return cmdTxt
 
 class disableServer(_ableServer):
+    """Disable backend/server command."""
     switch = "disable"
     helpTxt = "Disables given backend/server"
 
 class enableServer(_ableServer):
+    """Enable backend/server command."""
     switch = "enable"
     helpTxt = "Enables given backend/server"
 
 class setWeight(Cmd):
+    """Set weight command."""
     cmdTxt = "set weight %(backend)s/%(server)s %(weight)s\r\n"
     p_args = ['backend', 'server', 'weight']
     helpTxt = "Set weight for a given backend/server."
 
 class getWeight(Cmd):
+    """Get weight command."""
     cmdTxt = "get weight %(backend)s/%(server)s\r\n"
     p_args = ['backend', 'server']
     helpTxt = "Get weight for a given backend/server."
 
 class showErrors(Cmd):
-    """Show errors HAProxy command"""
+    """Show errors HAProxy command."""
     cmdTxt = "show errors\r\n"
     helpTxt = "Shows errors on HAProxy instance."
 
@@ -87,16 +91,19 @@ class showErrors(Cmd):
         return res.split('\n')
 
 class setServerAgent(Cmd):
+    """Set server agent command."""
     cmdTxt = "set server %(backend)s/%(server)s agent %(value)s\r\n"
     p_args = ['backend', 'server', 'value']
     helpTxt = "Force a server's agent to a new state."
 
 class setServerHealth(Cmd):
+    """Set server health command."""
     cmdTxt = "set server %(backend)s/%(server)s health %(value)s\r\n"
     p_args = ['backend', 'server', 'value']
     helpTxt = "Force a server's health to a new state."
 
 class setServerState(Cmd):
+    """Set server state command."""
     cmdTxt = "set server %(backend)s/%(server)s state %(value)s\r\n"
     p_args = ['backend', 'server', 'value']
     helpTxt = "Force a server's administrative state to a new state."
@@ -119,22 +126,24 @@ class showFBEnds(Cmd):
 
         if not self.switch:
             raise Exception("No action specified")
-            
+
         result = []
         lines = res.split('\n')
         cl = re.compile("^[^,].+," + self.switch.upper() + ",.*$")
 
         for e in lines:
-            me = re.match(cl, e) 
+            me = re.match(cl, e)
             if me:
                 result.append(e.split(",")[0])
         return result
 
 class showFrontends(showFBEnds):
+    """Show frontends command."""
     switch = "frontend"
     helpTxt = "List all Frontends."
 
 class showBackends(showFBEnds):
+    """Show backends command."""
     switch = "backend"
     helpTxt = "List all Backends."
 
@@ -160,7 +169,10 @@ class showSessions(Cmd):
         return res.split('\n')
 
 class baseStat(Cmd):
+    """Base class for stats commands."""
+
     def getCols(self, res):
+        """Get columns from stats output."""
         mobj = re.match("^#(?P<columns>.*)$", res, re.MULTILINE)
 
         if mobj:
@@ -178,21 +190,20 @@ class listServers(baseStat):
         return "\n".join(self.getResultObj(res))
 
     def getResultObj(self, res):
-        
         servers = []
         cols = self.getCols(res)
 
         for line in res.split('\n'):
             if line.startswith(self.args['backend']):
-                # Lines for server start with the name of the 
+                # Lines for server start with the name of the
                 # backend.
 
                 outCols = line.split(',')
                 if outCols[cols['svname']] != 'BACKEND':
                     servers.append(" " .join(("Name: %s" % outCols[cols['svname']],
-                             "Status: %s" % outCols[cols['status']], 
-                             "Weight: %s" %  outCols[cols['weight']],
-                             "bIn: %s" % outCols[cols['bin']],
-                             "bOut: %s" % outCols[cols['bout']])))
+                                              "Status: %s" % outCols[cols['status']],
+                                              "Weight: %s" %  outCols[cols['weight']],
+                                              "bIn: %s" % outCols[cols['bin']],
+                                              "bOut: %s" % outCols[cols['bout']])))
 
         return servers

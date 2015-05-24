@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# pylint: disable=locally-disabled
+# pylint: disable=star-args
 """
 Tool to interact with HAProxy.
 
@@ -14,19 +16,52 @@ This order is important, since options in the global file will
 get overriden by the ones in the user config file, which in turn
 will get overriden by the command line options."""
 
+from __future__ import print_function
+
+import argparse
 import os
 import sys
-import argparse
-from ConfigParser import ConfigParser
 
 from haproxy.conn import HaPConn
 from haproxy import cmds
 
-VERBOSE = False
-GCONFIG="/etc/haproxyctl/"
-UCONFIG=os.path.expanduser("~/.")
+try:
+    from configparser import ConfigParser
+except ImportError:
+    #pylint: disable=import-error
+    from ConfigParser import ConfigParser
+
+
+GCONFIG = "/etc/haproxyctl/"
+UCONFIG = os.path.expanduser("~/.")
+
+def parse_args():
+    """Parse command line arguments."""
+    config = process_config_files()
+    opts = argparse.ArgumentParser(description="Tool to interact with HAProxy", prog="haproxyctl")
+
+    opts.add_argument("-v", "--verbose", help="Be verbose.",
+                      action="store_true", default=config.get('verbose', False))
+    opts.add_argument("-c", "--command", help="Type of command. Default info", default="info")
+    opts.add_argument("-l", "--list-commands",
+                      help="Lists available commands.", action="store_true")
+    opts.add_argument("-H", "--help-command",
+                      help="Shows help for the given command.", action="store_true")
+    opts.add_argument("-s", "--server", help="Attempt action on given server.", default=None)
+    opts.add_argument("-w", "--weight", help="Specify weight for a server.")
+    opts.add_argument("-k", "--socket",
+                      help=("Socket to talk to HAProxy. It accepts unix:///path/to/socket"
+                            " or tcp://1.2.3.4:port addresses."
+                            " If there is no match for protocol, then it assumes a UNIX"
+                            " socket file."),
+                      default=config.get("socket", None))
+    opts.add_argument(
+        "-b", "--backend", help="Set backend to act upon.", default=config.get('backend', None))
+
+    return opts.parse_args()
 
 def process_config_files():
+    """Processes the configuration file for haproxyctl and returns them as a dictionary."""
     config_opts = {}
     cfgp = ConfigParser()
 
@@ -34,87 +69,63 @@ def process_config_files():
         cfgf = "".join((cfg, "haproxyctl.conf"))
         if os.path.exists(cfgf):
             cfgp.read(cfgf)
-            for k, v in cfgp.items("global"):
-                config_opts[k] = v
+            for key, value in cfgp.items("global"):
+                config_opts[key] = value
 
     return config_opts
 
-def logger(msg):
-    if VERBOSE:
-        print msg
-
 def main(args):
-    logger("Starting with args: ")
-    logger(args)
+    """Main function for haproxyctl."""
 
-    cmdline = {'backend' : args.backend,
-               'weight' : args.weight,
-               'server' : args.server}
+    cmdline = {"backend" : args.backend,
+               "weight" : args.weight,
+               "server" : args.server}
 
-    cmdMap = {"info" : cmds.showInfo,
-              "enable" : cmds.enableServer,
-              "disable" : cmds.disableServer,
-              "get-weight" : cmds.getWeight,
-              "servers" : cmds.listServers,
-              "set-weight" : cmds.setWeight,
-              "frontends" : cmds.showFrontends,
-              "backends" : cmds.showBackends,
-              "sessions" : cmds.showSessions}
+    cmd_map = {"info" : cmds.showInfo,
+               "enable" : cmds.enableServer,
+               "disable" : cmds.disableServer,
+               "get-weight" : cmds.getWeight,
+               "servers" : cmds.listServers,
+               "set-weight" : cmds.setWeight,
+               "frontends" : cmds.showFrontends,
+               "backends" : cmds.showBackends,
+               "sessions" : cmds.showSessions}
 
     if args.list_commands:
-        print "Available commands:"
-        for c in cmdMap.keys():
-            print "\t", c, " - ", cmdMap[c].getHelp()
+        print("Available commands:")
+        for cmd in cmd_map.keys():
+            print("\t %s - %s" % (cmd, cmd_map[cmd].getHelp()))
         return 2
 
-    cCmd = cmdMap.get(args.command, None)
+    c_cmd = cmd_map.get(args.command, None)
 
-    if cCmd:
+    if c_cmd:
         if args.help_command:
-            print args.command, " - ", cCmd.getHelp()
+            print("%s - %s" % (args.command, c_cmd.getHelp()))
         else:
 
             if not args.socket:
-                print "HAProxy socket not found. Must provide a socket file"
+                print("HAProxy socket not found. Must provide a socket file")
                 return 3
 
             try:
                 h_so = HaPConn(args.socket)
 
                 if h_so:
-                    print h_so.sendCmd(cCmd(**cmdline))
+                    print(h_so.sendCmd(c_cmd(**cmdline)))
                 else:
-                    print "Could not open socket"
-            except Exception as e:
-                print str(e)
+                    print("Could not open socket")
+            # pylint: disable=broad-except
+            except Exception as exc:
+                print(exc)
                 return 4
     else:
-        print "Need to specify a backend."
+        print("Need to specify a backend.")
+        return 5
 
     return 0
 
 if __name__ == "__main__":
-
-    st = "store_true"
-    cfo = process_config_files()
-    opts = argparse.ArgumentParser(description="Tool to interact with HAProxy", prog="haproxyctl")
-
-    opts.add_argument("-v", "--verbose", help="Be verbose.", action=st, default=cfo.get('verbose', False))
-    opts.add_argument("-c", "--command", help="Type of command. Default info", default="info")
-    opts.add_argument("-l", "--list-commands", help="Lists available commands.", action=st)
-    opts.add_argument("-H", "--help-command", help="Shows help for the given command.", action=st)
-    opts.add_argument("-s", "--server", help="Attempt action on given server.", default=None)
-    opts.add_argument("-b", "--backend", help="Set backend to act upon.", default=cfo.get('backend', None))
-    opts.add_argument("-w", "--weight", help="Specify weight for a server.")
-    opts.add_argument("-k", "--socket",
-        help=("Socket to talk to HAProxy. It accepts unix:///path/to/socket"
-              " or tcp://1.2.3.4:port addresses."
-              " If there is no match for protocol, then it assumes a UNIX"
-              " socket file."),
-        default=cfo.get("socket", None))
-
-    args = opts.parse_args()
-    VERBOSE = args.verbose
-
-    sts = main(args)
-    sys.exit(sts)
+    # pylint: disable=invalid-name
+    exit_status = main(parse_args())
+    sys.exit(exit_status)

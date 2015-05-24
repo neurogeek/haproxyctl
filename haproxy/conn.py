@@ -1,7 +1,12 @@
-"""Connection module"""
+# pylint: disable=locally-disabled, too-few-public-methods, no-self-use, invalid-name
+"""conn.py - Connection module."""
 import re
 from socket import socket, AF_INET, AF_UNIX, SOCK_STREAM
 from haproxy import const
+
+class HapError(Exception):
+    """Generic exception for haproxyctl."""
+    pass
 
 class HaPConn(object):
     """HAProxy Socket object.
@@ -27,15 +32,15 @@ class HaPConn(object):
             port = mobj.groupdict().get('port', '')
 
             if not addr or not proto:
-                raise Exception('Could not determine type of socket.')
+                raise HapError('Could not determine type of socket.')
 
-            if proto == const.HaP_TCP_PATH:
+            if proto == const.HAP_TCP_PATH:
                 if not port:
-                    raise Exception('When using a tcp socket, a port is needed.')
+                    raise HapError('When using a tcp socket, a port is needed.')
                 stype = AF_INET
                 sfile = (addr, int(port))
 
-            if proto == const.HaP_UNIX_PATH:
+            if proto == const.HAP_UNIX_PATH:
                 stype = AF_UNIX
                 sfile = addr
 
@@ -53,18 +58,20 @@ class HaPConn(object):
         self.sock.connect(sfile)
 
     def sendCmd(self, cmd, objectify=False):
-        """Receives a command obj and sends it to the
-           socket. Receives the output and passes it through
-           the command to parse it a present it.
-           - objectify -> Return an object instead of plain text"""
+        """Receives a command obj and sends it to the socket. Receives the output and passes it
+           through the command to parse it.
+           objectify -> Return an object instead of plain text"""
 
         res = ""
-        self.sock.send(cmd.getCmd())
-        output = self.sock.recv(const.HaP_BUFSIZE)
+        try:
+            self.sock.send(cmd.getCmd())
+        except TypeError:
+            self.sock.send(bytearray(cmd.getCmd(), 'ASCII'))
+        output = self.sock.recv(const.HAP_BUFSIZE)
 
         while output:
-            res += output
-            output = self.sock.recv(const.HaP_BUFSIZE)
+            res += output.decode('ASCII')
+            output = self.sock.recv(const.HAP_BUFSIZE)
 
         if objectify:
             return cmd.getResultObj(res)

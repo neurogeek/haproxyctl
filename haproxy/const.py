@@ -1,6 +1,7 @@
-HaP_OK = 1
-HaP_ERR = 2
-HaP_SOCK_ERR = 3
-HaP_BUFSIZE = 8192
-HaP_UNIX_PATH = 'unix://'
-HaP_TCP_PATH = 'tcp://'
+"""const.py - Constants for haproxyctl."""
+HAP_OK = 1
+HAP_ERR = 2
+HAP_SOCK_ERR = 3
+HAP_BUFSIZE = 8192
+HAP_UNIX_PATH = 'unix://'
+HAP_TCP_PATH = 'tcp://'
