@@ -1,7 +1,10 @@
+# pylint: disable=star-args, locally-disabled, too-few-public-methods, no-self-use, invalid-name
+"""test_cmds.py - Unittests related to command implementations."""
 from haproxy import cmds
 from unittest import TestCase
 
 class TestCommands(TestCase):
+    """Tests all of the haproxyctl's various commands."""
     def setUp(self):
 
         self.Resp = {"disable" : "disable server redis-ro/redis-ro0",
@@ -13,10 +16,9 @@ class TestCommands(TestCase):
                      "enable" : "enable server redis-ro/redis-ro0",
                      "set-server-agent" : "set server redis-ro/redis-ro0 agent up",
                      "set-server-health" : "set server redis-ro/redis-ro0 health stopping",
-                     "set-server-state" : "set server redis-ro/redis-ro0 state drain",
-                     }
+                     "set-server-state" : "set server redis-ro/redis-ro0 state drain"}
 
-        self.Resp = dict([(k, v + "\r\n") for k, v in self.Resp.iteritems()])
+        self.Resp = dict([(k, v + "\r\n") for k, v in self.Resp.items()])
 
     def test_showFrontends(self):
         """Test 'frontends/backends' commands"""
