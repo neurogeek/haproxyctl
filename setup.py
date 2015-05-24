@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='haproxyctl',
-      version='0.4',
+      version='0.5',
       description='Tool to talk to HAProxy socket',
       author='Jesus Rivero',
       author_email='jesus@meetup.com',

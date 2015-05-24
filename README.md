@@ -15,6 +15,9 @@ HAProxyctl is a tool to manage the various aspects of HAProxy that can be contro
 
 With HAProxyctl, it is possible to do the following:
 
+(New in 0.5)
+* Support for Python3. 
+
 (New in 0.4)
 * Ability to pass a tcp:// or a unix:// socket address to -k|--socket
 
@@ -70,8 +73,3 @@ optional arguments:
                         addresses. If there is no match
                         for protocol, then it assumes a UNIX socket file.
 ```
-
-API Usage
----------
-
-TBW...
