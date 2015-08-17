@@ -41,7 +41,7 @@ CLI mode, as the name implies, gives you a command, haproxyctl, that can be used
 
 You can use the Python API mode to integrate HAProxyctl directly in your Python project.
 
-Every command in HAProxyctl has at least two methods: getResut and getResultObj. 
+Every command in HAProxyctl has at least two methods: getResult and getResultObj. 
 
 The method getResult returns a formatted string with the results obtained by executing the given HAProxy command, while getResultObj returns a Python object with the results, making it easy to use this results in some Python code.
 
